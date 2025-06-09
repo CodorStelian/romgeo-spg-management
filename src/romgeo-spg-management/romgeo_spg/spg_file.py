@@ -1,6 +1,8 @@
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import gzip
+import math
 import json
 from types import SimpleNamespace
 
@@ -37,6 +39,9 @@ class SPGFile:
     
         save_json(output_path: str):
             Save the SPG file content as JSON.
+            
+        save_json_gzip(output_path: str):
+            Save the SPG data as a gzip-compressed JSON file.
     
         generate_metadata_json(output_path: str = None):
             Generate a metadata.json file for the SPG grid based on class metadata.
@@ -193,11 +198,31 @@ class SPGFile:
         """Save the current data back into a .spg (pickle) file."""
         with open(output_path, "wb") as file:
             pickle.dump(self.data, file, protocol=pickle.HIGHEST_PROTOCOL)
-    
+
+    @staticmethod
+    def convert_ndarrays(obj):
+        if isinstance(obj, np.ndarray):
+            return SPGFile.convert_ndarrays(obj.tolist())
+        elif isinstance(obj, dict):
+            return {k: SPGFile.convert_ndarrays(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [SPGFile.convert_ndarrays(i) for i in obj]
+        elif isinstance(obj, float) and math.isnan(obj):
+            return "NaN"
+        else:
+            return obj
+
     def save_json(self, output_path: str):
         """Save the SPG file content as JSON."""
+        data = self.convert_ndarrays(self.data)
         with open(output_path, "w") as file:
-            json.dump(self.data, file, indent=4)
+            json.dump(data, file, indent=3)
+
+    def save_json_gzip(self, output_path: str):
+        """Save the SPG data as a gzip-compressed JSON file."""
+        data = self.convert_ndarrays(self.data)
+        with gzip.open(output_path, "wt", encoding="utf-8") as file:
+            json.dump(data, file, separators=(",", ":"))
 
     def generate_metadata_json(self, output_path: str = None):
         """Generate a metadata.json file for the SPG grid based on class metadata."""

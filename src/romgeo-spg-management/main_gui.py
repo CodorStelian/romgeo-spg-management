@@ -79,6 +79,9 @@ class SPGManagerGUI(QMainWindow):
         file_menu.addSeparator()        
 
         export_menu = menubar.addMenu("Export")
+        export_menu.addAction("Export as JSON", self.save_json)
+        export_menu.addAction("Export as GZip-compressed JSON", self.save_json_gzip)
+        export_menu.addSeparator()
         export_menu.addAction("Export X Grid CSV", lambda: self.export_grid_csv(self.geodetic_x_table))
         export_menu.addAction("Export Y Grid CSV", lambda: self.export_grid_csv(self.geodetic_y_table))
         export_menu.addAction("Export Z Grid CSV", lambda: self.export_grid_csv(self.geoid_table))
@@ -164,6 +167,22 @@ class SPGManagerGUI(QMainWindow):
             if file_path:
                 self.spg.save_spg(file_path)
                 QMessageBox.information(self, "Saved", "SPG file saved successfully.")
+    
+    def save_json(self):
+        if self.spg:
+            self.save_grids_from_tables()
+            file_path, _ = QFileDialog.getSaveFileName(self, "Save JSON File", "", "JSON Files (*.json)")
+            if file_path:
+                self.spg.save_json(file_path)
+                QMessageBox.information(self, "Saved", "JSON file saved successfully.")
+                
+    def save_json_gzip(self):
+        if self.spg:
+            self.save_grids_from_tables()
+            file_path, _ = QFileDialog.getSaveFileName(self, "Save GZip-compressed JSON File", "", "GZip Files (*.gz)")
+            if file_path:
+                self.spg.save_json_gzip(file_path)
+                QMessageBox.information(self, "Saved", "GZip-compressed JSON file saved successfully.")
 
     def load_grids_to_tables(self):
         # Use the new data access pattern
